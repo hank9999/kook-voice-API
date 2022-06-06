@@ -3,8 +3,9 @@
 本项目提供 API 使用说明 及 Python 异步实现 
 
 ## 使用须知
-**注意本API由抓包得来**
-**您需要得知使用此API会违反 [开黑啦语音软件许可及服务协议](https://www.kaiheila.cn/protocol.html) 3.2.3或3.2.5协议** 
+**注意本 API 由抓包得来，API 可能会随时变动进而失效**    
+**您需要得知使用此API会违反 [开黑啦语音软件许可及服务协议](https://www.kaiheila.cn/protocol.html) `3.2.3` 或 `3.2.5` 条款**  
+**同时会违反 [开黑啦开发者隐私政策](https://developer.kaiheila.cn/doc/privacy) `数据信息` 或 `滥用` 中的相关条款**  
 
 ## API 说明
 gateway: `https://www.kaiheila.cn/api/v3/gateway/voice?channel_id={channel_id}`  
