@@ -15,6 +15,45 @@ gateway: `https://www.kaiheila.cn/api/v3/gateway/voice?channel_id={channel_id}`
 3号返回的data中 有rtp推流用的 `ip` `port` `rtcpPort`  
 每一号都需要生成一个随机数id 用随机int替代  
 `ws` 记得发协议的保活 `Ping` `ws`掉了语音自动掉  
+实现参考 voice_example.py
+
+
+## Python voice.py 直接引用说明
+```python
+from voice import Voice
+
+async def playlist_handler():
+    ... # handler 实现
+    
+    # 加入频道
+    voice.channel_id = '频道 ID'
+    while True:
+        if len(voice.rtp_url) != 0:
+            rtp_url = voice.rtp_url
+            break
+        await asyncio.sleep(0.1)
+        
+    ... # 推流实现
+    
+    # 结束当前推流
+    voice.is_exit = True
+    while True:
+        if not voice.is_exit:
+            break
+        await asyncio.sleep(0.1)
+        
+async def main():
+    await asyncio.wait([
+        playlist_handler(), # 播放列表处理
+        bot.start(), # khl.py 框架
+        voice.handler() # voice 处理
+    ])
+    
+if __name__ == '__main__':
+    voice = Voice(token) # 初始化 voice, token 为机器人 token
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+```
 
 ## 推流说明
 ```
