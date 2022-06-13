@@ -117,7 +117,10 @@ class Voice:
                 ping_time = now_time
 
     async def main(self):
-        await asyncio.wait([self.ws_msg(), self.connect_ws(), self.ws_ping()], return_when='FIRST_COMPLETED')
+        task_ws_msg = asyncio.create_task(self.ws_msg())
+        task_connect_ws = asyncio.create_task(self.connect_ws())
+        task_ws_ping = asyncio.create_task(self.ws_ping())
+        await asyncio.wait([task_ws_msg, task_connect_ws, task_ws_ping], return_when='FIRST_COMPLETED')
         self.is_exit = False
         self.channel_id = ''
         self.rtp_url = ''

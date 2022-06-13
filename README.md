@@ -22,12 +22,16 @@ gateway: `https://www.kaiheila.cn/api/v3/gateway/voice?channel_id={channel_id}`
 通过 `API` 请求另一个服务器的语音频道 且 保持上一个语音频道的 `ws` 连接, 可实现同时进多个不同服务器的频道 且 可以推送不同的音频流
 
 ## Python voice.py 多推 直接引用详细说明
+
 ```python
+import asyncio
 from voice import Voice
 
 playlist: Dict[str, List[Dict]] = {}
 # playlist = {'群组ID': [{'channel': '音频频道ID', 'file': '音频文件路径'}]}
 playlist_handle_status = {}
+
+
 # playlist_handle_status = {'群组ID': True} 某个群组已有处理器
 
 # 新建线程处理对应群组的播放列表
@@ -44,27 +48,29 @@ class PlayHandler(threading.Thread):
         print("处理完成：" + self.guild)
 
     async def main(self):
+        task_handler = asyncio.create_task(self.handler())
+        task_voice_handler = asyncio.create_task(self.voice.handler())
         await asyncio.wait([
-            self.handle(), # 播放列表 处理
-            self.voice.handler() # voice 处理
+            task_handler,  # 播放列表 处理
+            task_voice_handler  # voice 处理
         ], return_when='FIRST_COMPLETED')
 
-    async def handle(self):
+    async def handler(self):
         global playlist_handle_status
         while True:
             if len(playlist[self.guild]) != 0:
-                play_info = playlist[self.guild].pop(0) # 取出一个
-                self.voice.channel_id = play_info['channel'] # 设置 voice 频道ID
+                play_info = playlist[self.guild].pop(0)  # 取出一个
+                self.voice.channel_id = play_info['channel']  # 设置 voice 频道ID
                 while True:
                     if len(self.voice.rtp_url) != 0:
-                        rtp_url = self.voice.rtp_url # 获取 rtp 推流链接
+                        rtp_url = self.voice.rtp_url  # 获取 rtp 推流链接
                         break
                     await asyncio.sleep(0.1)
-                audio_path = play_info['file'] # 获取文件路径
+                audio_path = play_info['file']  # 获取文件路径
                 # 开始推流
                 command = f'ffmpeg -re -loglevel level+info -nostats -i "{audio_path}" -map 0:a:0 -acodec libopus -ab 128k -filter:a volume=0.8 -ac 2 -ar 48000 -f tee [select=a:f=rtp:ssrc=1357:payload_type=100]{rtp_url}'
                 p = await asyncio.create_subprocess_shell(command, shell=True, stdout=subprocess.DEVNULL,
-                                         stderr=subprocess.DEVNULL)
+                                                          stderr=subprocess.DEVNULL)
                 while True:
                     # 判断当前歌曲是否推流结束
                     if p.returncode is not None:
@@ -99,10 +105,12 @@ async def playlist_handler():
 
 
 async def main():
-    await asyncio.gather(
-        playlist_handler(),  # 播放列表处理
-        bot.start(),  # khl.py 框架
-    )
+    task_playlist_handler = asyncio.create_task(playlist_handler())
+    task_bot = asyncio.create_task(bot.start())
+    await asyncio.wait([
+        task_playlist_handler,  # 播放列表处理
+        task_bot  # khl.py 框架
+    ])
 
 
 if __name__ == '__main__':
@@ -111,12 +119,15 @@ if __name__ == '__main__':
 ```
 
 ## Python voice.py 单推 直接引用说明
+
 ```python
+import asyncio
 from voice import Voice
 
+
 async def playlist_handler():
-    ... # handler 实现
-    
+    ...  # handler 实现
+
     # 加入频道
     voice.channel_id = '频道 ID'
     while True:
@@ -124,25 +135,30 @@ async def playlist_handler():
             rtp_url = voice.rtp_url
             break
         await asyncio.sleep(0.1)
-        
-    ... # 推流实现
-    
+
+    ...  # 推流实现
+
     # 结束当前推流
     voice.is_exit = True
     while True:
         if not voice.is_exit:
             break
         await asyncio.sleep(0.1)
-        
+
+
 async def main():
+    task_playlist_handler = asyncio.create_task(playlist_handler())
+    task_bot = asyncio.create_task(bot.start())
+    task_voice_handler = asyncio.create_task(voice.handler())
     await asyncio.wait([
-        playlist_handler(), # 播放列表处理
-        bot.start(), # khl.py 框架
-        voice.handler() # voice 处理
+        task_playlist_handler,  # 播放列表处理
+        task_bot,  # khl.py 框架
+        task_voice_handler  # voice 处理
     ])
-    
+
+
 if __name__ == '__main__':
-    voice = Voice(token) # 初始化 voice, token 为机器人 token
+    voice = Voice(token)  # 初始化 voice, token 为机器人 token
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
 ```
