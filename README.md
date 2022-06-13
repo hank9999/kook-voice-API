@@ -18,7 +18,10 @@ gateway: `https://www.kaiheila.cn/api/v3/gateway/voice?channel_id={channel_id}`
 实现参考 voice_example.py
 
 
-## Python voice.py 直接引用说明
+## 多推说明
+通过 `API` 请求另一个服务器的语音频道 且 保持上一个语音频道的 `ws` 连接, 可实现同时进多个不同服务器的频道 且 可以推送不同的音频流
+
+## Python voice.py 单推 直接引用说明
 ```python
 from voice import Voice
 
