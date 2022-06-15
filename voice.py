@@ -24,6 +24,7 @@ class Voice:
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://www.kaiheila.cn/api/v3/gateway/voice?channel_id={channel_id}',
                                    headers={'Authorization': f'Bot {self.token}'}) as res:
+                print(await res.text())
                 return (await res.json())['data']['gateway_url']
 
     async def connect_ws(self):
@@ -94,7 +95,7 @@ class Voice:
                     if 'notification' in data and 'method' in data and data['method'] == 'disconnect':
                         print('The connection had been disconnected', data)
                     else:
-                        pass
+                        print('else:', data)
             await asyncio.sleep(0.1)
 
     async def ws_ping(self):
@@ -121,6 +122,8 @@ class Voice:
         task_connect_ws = asyncio.create_task(self.connect_ws())
         task_ws_ping = asyncio.create_task(self.ws_ping())
         await asyncio.wait([task_ws_msg, task_connect_ws, task_ws_ping], return_when='FIRST_COMPLETED')
+        if len(self.ws_clients) != 0:
+            await self.ws_clients[0].close()
         self.is_exit = False
         self.channel_id = ''
         self.rtp_url = ''
